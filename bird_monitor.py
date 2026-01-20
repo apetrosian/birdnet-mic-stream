@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""
-Continuous bird detection using BirdNET and microphone audio stream.
-Records continuously in chunks and detects bird species in real-time.
-Based on SimpleBirdDetector but with continuous monitoring.
-"""
+"""Bird detection from microphone using BirdNET deep learning model."""
 
 import io
 import sys
@@ -23,7 +19,7 @@ except ImportError:
     print("Install with: pip install birdnetlib")
     sys.exit(1)
 
-class ContinuousBirdDetector:
+class BirdDetector:
     """Continuous real-time bird detection from microphone."""
     
     def __init__(self, sample_rate=48000, confidence_threshold=0.5, chunk_duration=10):
@@ -82,8 +78,8 @@ class ContinuousBirdDetector:
             return []
 
 
-class ContinuousBirdMonitor:
-    """Continuous bird monitoring with true parallel recording and detection."""
+class BirdMonitor:
+    """Continuous bird monitoring with parallel recording and detection."""
     
     def __init__(self,
                  sample_rate=16000,
@@ -101,7 +97,7 @@ class ContinuousBirdMonitor:
         self.chunk_duration = chunk_duration
         self.confidence_threshold = confidence_threshold
         
-        self.detector = ContinuousBirdDetector(
+        self.detector = BirdDetector(
             sample_rate=sample_rate,
             confidence_threshold=confidence_threshold,
             chunk_duration=chunk_duration
@@ -197,7 +193,6 @@ class ContinuousBirdMonitor:
             print(f"  {det['common_name']:35} ({confidence_pct:5.1f}%)")
 
 def main():
-    """Main entry point."""
     import argparse
     
     parser = argparse.ArgumentParser(
@@ -226,7 +221,7 @@ def main():
         print("✗ Duration must be positive")
         sys.exit(1)
     
-    monitor = ContinuousBirdMonitor(
+    monitor = BirdMonitor(
         chunk_duration=args.duration,
         confidence_threshold=args.confidence,
     )
