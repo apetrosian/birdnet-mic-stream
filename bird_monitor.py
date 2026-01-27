@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""Bird detection from microphone using BirdNET deep learning model."""
+"""Continuous bird monitoring from microphone using BirdNET deep learning model."""
 
+import argparse
 import io
+import queue
 import sys
 import threading
-import queue
+from datetime import datetime
 
 import numpy as np
 import sounddevice as sd
-from datetime import datetime
+import soundfile as sf
 
 
 try:
@@ -53,9 +55,7 @@ class BirdDetector:
         if audio_data is None or len(audio_data) == 0:
             return []
         
-        try:
-            import soundfile as sf
-            
+        try:            
             # Create in-memory WAV buffer
             wav_buffer = io.BytesIO()
             sf.write(wav_buffer, audio_data.astype(np.float32), self.sample_rate, format='WAV')
@@ -64,7 +64,7 @@ class BirdDetector:
             recording = RecordingFileObject(
                 self.analyzer,
                 wav_buffer,
-                min_conf=self.confidence_threshold,
+                min_conf=self.confidence_threshold
             )
             
             # Analyze recording
@@ -82,7 +82,7 @@ class BirdMonitor:
     """Continuous bird monitoring with parallel recording and detection."""
     
     def __init__(self,
-                 sample_rate=16000,
+                 sample_rate=48000,
                  chunk_duration=10,
                  confidence_threshold=0.5):
         """
@@ -109,7 +109,7 @@ class BirdMonitor:
         self.is_running = False
         
     def _recording_thread(self):
-        """Thread for continuous recording (fills buffer)."""
+        """Thread for continuous audio capture."""
         while self.is_running:
             try:
                 audio_data = self.detector.record_chunk()
@@ -122,7 +122,7 @@ class BirdMonitor:
                     continue
     
     def _detection_thread(self):
-        """Thread for detection (processes recorded chunks in parallel)."""
+        """Thread for detection."""
         while self.is_running:
             try:
                 audio_data = self.recording_queue.get(timeout=1)
@@ -146,10 +146,11 @@ class BirdMonitor:
     def start(self):
         """Start continuous bird monitoring with parallel recording and detection."""
         print("\n🎤 Starting continuous bird detection")
+        print(f"   Sample rate: {self.sample_rate}")
         print(f"   Chunk duration: {self.chunk_duration}s")
         print(f"   Confidence threshold: {self.confidence_threshold}")
-        print("-" * 60)
-        
+        print(f"   Press Ctrl+C to stop\n")
+
         self.is_running = True
         
         recording_thread = threading.Thread(
@@ -193,24 +194,33 @@ class BirdMonitor:
             print(f"  {det['common_name']:35} ({confidence_pct:5.1f}%)")
 
 def main():
-    import argparse
+    """Parse arguments and start monitoring."""   
     
     parser = argparse.ArgumentParser(
         description="Continuous bird detection using BirdNET and microphone"
     )
+    
     parser.add_argument(
         "--duration",
         type=int,
         default=10,
         help="Duration in seconds for each detection chunk (default: 10)"
     )
+
     parser.add_argument(
         "--confidence",
         type=float,
         default=0.5,
         help="Minimum confidence threshold (0.0-1.0, default: 0.5)"
     )
-    
+
+    parser.add_argument(
+        "--sample-rate",
+        type=int,
+        default=48000,
+        help="Audio sample rate (default: 48000)"
+    )
+
     args = parser.parse_args()
     
     if not 0.0 <= args.confidence <= 1.0:
@@ -224,6 +234,7 @@ def main():
     monitor = BirdMonitor(
         chunk_duration=args.duration,
         confidence_threshold=args.confidence,
+        sample_rate=args.sample_rate,
     )
     
     monitor.start()

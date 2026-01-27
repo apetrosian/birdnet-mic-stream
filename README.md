@@ -32,17 +32,14 @@ pip install -r requirements.txt
 
 Run bird monitoring that detects birds in real-time:
 ```bash
-# Monitor with default settings
+# Start monitoring with default settings
 python bird_monitor.py
 
-# Monitor with custom chunk duration (5s analysis windows)
-python bird_monitor.py --duration 15
+# Start monitoring with 1 minute chunk duration and 70% confidence threshold
+python bird_monitor.py --duration 60 --confidence 0.7
 
-# Monitor with higher confidence threshold
-python bird_monitor.py --confidence 0.7
-
-# Combine all options
-python bird_monitor.py --duration 15 --confidence 0.6
+# Display detailed usage instructions
+python bird_monitor.py -h
 ```
 
 **Stop monitoring:** Press `Ctrl+C` to stop
