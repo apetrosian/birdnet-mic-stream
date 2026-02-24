@@ -77,7 +77,7 @@ class BirdDetector:
             return recording.detections if recording.detections else []
 
         except Exception as e:
-            logging.error(f"✗ Error during detection: {e}")
+            logging.error(f"Error during detection: {e}")
             return []
 
 
@@ -119,7 +119,7 @@ class BirdMonitor:
                 if audio_data is not None:
                     self.recording_queue.put(audio_data)
             except Exception as e:
-                logging.error(f"✗ Error in recording thread: {e}")
+                logging.error(f"Error in recording thread: {e}")
                 if self.is_running:
                     continue
 
@@ -139,17 +139,17 @@ class BirdMonitor:
             except queue.Empty:
                 pass
             except Exception as e:
-                logging.error(f"✗ Error in detection thread: {e}")
+                logging.error(f"Error in detection thread: {e}")
                 if self.is_running:
                     continue
 
     def start(self):
         """Start continuous bird monitoring with parallel recording and detection."""
-        logging.info("\n🎤 Starting continuous bird detection")
-        logging.info(f"   Sample rate: {self.sample_rate}")
-        logging.info(f"   Chunk duration: {self.chunk_duration}s")
-        logging.info(f"   Confidence threshold: {self.confidence_threshold}")
-        logging.info("   Press Ctrl+C to stop\n")
+        logging.info("Starting continuous bird detection")
+        logging.info(f"Sample rate: {self.sample_rate}")
+        logging.info(f"Chunk duration: {self.chunk_duration}s")
+        logging.info(f"Confidence threshold: {self.confidence_threshold}")
+        logging.info("Press Ctrl+C to stop\n")
 
         self.is_running = True
 
@@ -171,7 +171,7 @@ class BirdMonitor:
                 except queue.Empty:
                     pass
         except KeyboardInterrupt:
-            logging.info("\nStopping bird detection...")
+            logging.info("Stopping bird detection...")
             self.stop()
 
     def stop(self):
@@ -185,9 +185,9 @@ class BirdMonitor:
                 self.recording_queue.get_nowait()
             while not self.detection_queue.empty():
                 self.detection_queue.get_nowait()
-            logging.info("✓ Queues drained")
+            logging.info("Queues drained")
         except Exception as e:
-            logging.error(f"✗ Error draining queues: {e}")
+            logging.error(f"Error draining queues: {e}")
 
         # Wait for threads to finish with timeout
         threads = [
@@ -198,14 +198,14 @@ class BirdMonitor:
             if thread is not None:
                 thread.join()
                 if thread.is_alive():
-                    logging.warning(f"⚠ Thread {thread.name} did not stop gracefully")
+                    logging.warning(f"Thread {thread.name} did not stop gracefully")
 
         # Release audio hardware
         try:
             sd.wait()
-            logging.info("✓ Audio hardware released")
+            logging.info("Audio hardware released")
         except Exception as e:
-            logging.error(f"✗ Error releasing audio harware: {e}")
+            logging.error(f"Error releasing audio harware: {e}")
 
         # Close analyzer and release resources
         try:
@@ -214,15 +214,15 @@ class BirdMonitor:
                 if hasattr(analyzer, "interpreter") and analyzer.interpreter:
                     try:
                         analyzer.interpreter.reset_all_variables()
-                        logging.info("✓ Analyzer resources released")
+                        logging.info("Analyzer resources released")
                     except Exception as e:
                         logging.warning(f"Could not reset analyzer interpreter: {e}")
                 else:
-                    logging.info("✓ Analyzer resources released")
+                    logging.info("Analyzer resources released")
         except Exception as e:
-            logging.error(f"✗ Error releasing analyzer resources: {e}")
+            logging.error(f"Error releasing analyzer resources: {e}")
 
-        logging.info("✓ Bird detection stopped")
+        logging.info("Bird detection stopped")
 
     def _print_detections(self, result):
         """Print detection results."""
@@ -267,11 +267,11 @@ def main():
     args = parser.parse_args()
 
     if not 0.0 <= args.confidence <= 1.0:
-        logging.error("✗ Confidence must be between 0.0 and 1.0")
+        logging.error("Confidence must be between 0.0 and 1.0")
         sys.exit(1)
 
     if args.duration <= 0:
-        logging.error("✗ Duration must be positive")
+        logging.error("Duration must be positive")
         sys.exit(1)
 
     monitor = BirdMonitor(
