@@ -11,8 +11,6 @@ from datetime import datetime
 import sounddevice as sd
 import soundfile as sf
 
-print(sd.query_devices())
-
 try:
     from birdnetlib import RecordingFileObject
     from birdnetlib.analyzer import Analyzer
@@ -108,6 +106,8 @@ class BirdMonitor:
         self.recording_queue = queue.Queue(maxsize=2)
         self.detection_queue = queue.Queue()
         self.is_running = False
+        self.recording_thread = None
+        self.detection_thread = None
 
     def _recording_thread(self):
         """Thread for continuous audio capture."""
@@ -152,15 +152,15 @@ class BirdMonitor:
 
         self.is_running = True
 
-        recording_thread = threading.Thread(
-            target=self._recording_thread, daemon=True, name="RecordingThread"
+        self.recording_thread = threading.Thread(
+            target=self._recording_thread, daemon=False, name="RecordingThread"
         )
-        detection_thread = threading.Thread(
-            target=self._detection_thread, daemon=True, name="DetectionThread"
+        self.detection_thread = threading.Thread(
+            target=self._detection_thread, daemon=False, name="DetectionThread"
         )
 
-        recording_thread.start()
-        detection_thread.start()
+        self.recording_thread.start()
+        self.detection_thread.start()
 
         try:
             while self.is_running:
@@ -174,9 +174,53 @@ class BirdMonitor:
             self.stop()
 
     def stop(self):
-        """Stop bird monitoring."""
+        """Stop bird monitoring with proper cleanup."""
+
         self.is_running = False
-        sd.stop()
+
+        # Drain queues before shutdown
+        try:
+            while not self.recording_queue.empty():
+                self.recording_queue.get_nowait()
+            while not self.detection_queue.empty():
+                self.detection_queue.get_nowait()
+            print("✓ Queues drained")
+        except Exception as e:
+            print(f"✗ Error draining queues: {e}")
+
+        # Wait for threads to finish with timeout
+        threads = [
+            self.recording_thread,
+            self.detection_thread,
+        ]
+        for thread in threads:
+            if thread is not None:
+                thread.join()
+                if thread.is_alive():
+                    print(f"⚠ Thread {thread.name} did not stop gracefully")
+
+        # Release audio hardware
+        try:
+            sd.wait()
+            print("✓ Audio hardware released")
+        except Exception as e:
+            print(f"✗ Error releasing audio harware: {e}")
+
+        # Close analyzer and release resources
+        try:
+            if hasattr(self.detector, "analyzer") and self.detector.analyzer:
+                analyzer = self.detector.analyzer
+                if hasattr(analyzer, "interpreter") and analyzer.interpreter:
+                    try:
+                        analyzer.interpreter.reset_all_variables()
+                        print("✓ Analyzer resources released")
+                    except Exception as e:
+                        print(f"⚠ Warning: Could not reset analyzer interpreter: {e}")
+                else:
+                    print("✓ Analyzer resources released")
+        except Exception as e:
+            print(f"✗ Error releasing analyzer resources: {e}")
+
         print("✓ Bird detection stopped")
 
     def _print_detections(self, result):
