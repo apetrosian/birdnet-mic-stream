@@ -10,6 +10,7 @@ from datetime import datetime
 
 import sounddevice as sd
 import soundfile as sf
+from exporter.firebase import FirebaseExporter
 
 try:
     from birdnetlib import RecordingFileObject
@@ -162,6 +163,8 @@ class BirdMonitor:
         self.recording_thread.start()
         self.detection_thread.start()
 
+        self.exporter = FirebaseExporter()
+
         try:
             while self.is_running:
                 try:
@@ -227,6 +230,9 @@ class BirdMonitor:
         """Print detection results."""
         timestamp = result["timestamp"].strftime("%H:%M:%S")
         detections = result["detections"]
+
+        # export detections
+        self.exporter.send(detections)
 
         for det in detections:
             confidence_pct = det["confidence"] * 100
