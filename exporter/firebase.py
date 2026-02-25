@@ -1,8 +1,14 @@
+import os
+
 import firebase_admin
 from firebase_admin import credentials, firestore
 
 # Initialize Firebase
-cred = credentials.Certificate("firebase_service_account.json")
+service_account_path = os.environ.get(
+    "FIREBASE_SERVICE_ACCOUNT_PATH", "firebase_service_account.json"
+)
+
+cred = credentials.Certificate(service_account_path)
 firebase_admin.initialize_app(cred)
 
 # Initialize Firestore DB

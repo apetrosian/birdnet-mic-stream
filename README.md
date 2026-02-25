@@ -44,6 +44,19 @@ python bird_monitor.py -h
 
 **Stop monitoring:** Press `Ctrl+C` to stop
 
+## Firebase Configuration
+
+To enable Firebase export functionality, configure the Firebase service account:
+
+1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
+2. Enable Cloud Firestore in your Firebase project
+3. Download the service account JSON file from Firebase Console → Project Settings → Service Accounts
+4. Set the environment variable with the service account path:
+   ```bash
+   export FIREBASE_SERVICE_ACCOUNT_PATH=/path/to/firebase_service_account.json
+   ```
+   Or add it to your shell configuration file (e.g., `.bashrc`, `.zshrc`)
+
 ## About BirdNET
 
 Developed by the [K. Lisa Yang Center for Conservation Bioacoustics](https://www.birds.cornell.edu/ccb/) at the [Cornell Lab of Ornithology](https://www.birds.cornell.edu/home) in collaboration with [Chemnitz University of Technology](https://www.tu-chemnitz.de/index.html.en).
